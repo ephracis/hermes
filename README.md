@@ -7,26 +7,27 @@ Features:
 * Download apps from the store
 * Analyze apps by static code analysis
 * Print statistics in human readable form
-* Generate reports in LaTeX tables and graphs
+* Generate reports in form of LaTeX tables and graphs
 * Creates restore points if script aborts unexpectedly
+* Saves data for interactive inspection
 
 ## Requirements
 
-You need to install some packages for Hermes to function properly:
+You need to install some packages before you can run Hermes:
 
 * **Androguard**<br/>
-  Tool for reverse engineering Android app files.<br/>
-  URL: https://code.google.com/p/androguard/
+ Tool for reverse engineering Android app files.<br/>
+ https://code.google.com/p/androguard/
 
 * **Mallodroid**<br/>
  An Androguard module which examines SSL certificate validation.<br/>
- URL: https://github.com/sfahl/mallodroid
+ https://github.com/sfahl/mallodroid
 
 * **GooglePlayAPI**<br/>
- Python module which uses an unofficial API for searching for and downloading apps on the Google Play Store.<br/>
- URL: https://github.com/egirault/googleplay-api
+ Python module which uses an unofficial API for searching and downloading apps on the Google Play Store.<br/>
+ https://github.com/egirault/googleplay-api
 
-You need to specify the location of Mallodroid and GooglePlayAPI. You do this by setting the PYTHONPATH environment variable:
+When you have downloaded the following you need to specify the location of Mallodroid and GooglePlayAPI. You do this by setting the PYTHONPATH environment variable:
 
 `$ export PYTHONPATH=$PYTHONPATH:/path/to/mallodroid:/path/to/googleplayapi`
 
