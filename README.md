@@ -51,10 +51,10 @@ Use mail and password:<br/>
 Use token:<br/>
 `$ hermes.py -t TOKEN`
 
-Generate statistic files:<br/>
+Only generate reports:<br/>
 `$ hermes.py -D -P`
 
-Print statistics:<br/>
+Only print statistics:<br/>
 `$ hermes.py -D -G`
 
 For more information:<br/>
@@ -71,7 +71,3 @@ Send me a pull request and I'll look into it.
 
 You can support my work by sending a contribution to the following bitcoin address:
 14xHJbs8hCxXzxe9Facv162AZmWyYEeWb1
-
-## License
-
-This code is released under the MIT license. See http://opensource.org/licenses/MIT
