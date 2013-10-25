@@ -36,7 +36,7 @@ When you have downloaded the following you need to specify the location of Mallo
 In order to download apps from the Google Play Store you need
 to provide your android id number.
 
-Type *#*#8255#*#* on your phone to start GTalk Monitor.
+Type `*#*#8255#*#*` on your phone to start GTalk Monitor.
 Your Android ID is the hexadecimal string shown as 'aid'.
 
 You will also need to specify your credentials to log in
