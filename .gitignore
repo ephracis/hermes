@@ -1,3 +1,5 @@
+.hermes-cache*
+
 *.py[cod]
 
 # C extensions

@@ -13,6 +13,7 @@ import time
 import operator
 import os
 import argparse
+import math
 from pprint import pprint
 from google.protobuf import text_format
 
@@ -52,6 +53,12 @@ def fixName(category):
 	elif fixed == "App Widgets":
 		fixed = "Widgets"
 	return fixed
+
+def roundUp(number):
+	""" Round up an integer to the nearest power of then of the same degree.
+	Exempel: 35 -> 40, 540 -> 600, 1250 -> 2000, etc """
+	nearest = math.pow(10,len(str(number))-1)
+	return int(math.ceil(number / nearest) * nearest)
 
 def title_except(s, exceptions):
 	""" Titlelize a string with exceptions. """
@@ -287,12 +294,17 @@ def calculateStatistics(apps):
 			category = cat[0]
 			if not category in categories:
 				categories[category] = {}
+				categories[category]['top_apps'] = { 'safe':[], 'vulnerable':[] }
 			fillStats(app, meta, categories[category])
+			categories[category]['top_apps'][sec].append((_t, _a, _d))
 			
 	# do some sorting
 	for sec in ['vulnerable', 'safe']:
 		top_apps[sec] = sorted(top_apps[sec], key=lambda x: str2float(x[2]))
 		top_apps[sec].reverse()
+		for category in categories:
+			categories[category]['top_apps'][sec] = sorted(categories[category]['top_apps'][sec], key=lambda x: str2float(x[2]))
+			categories[category]['top_apps'][sec].reverse()
 	
 	return {
 		'categories':categories,
@@ -421,8 +433,8 @@ def printTexGraph(data, filename):
 	"""
 	file = open(filename, 'w')
 	
-	xmax = max(map(lambda x: x[1], data))
-	labels = ",".join(map(lambda x: x[0], data))
+	xmax = roundUp(max(map(lambda x: x[1], data)))
+	labels = ",".join(map(lambda x: "{{{}}}".format(x[0]), data))
 	
 	printLine = len(data[0]) == 3
 	if not printLine: # bars are percentage
@@ -440,7 +452,7 @@ def printTexGraph(data, filename):
 	file.write("	ytick=data]\n")
 	file.write("	\\addplot coordinates {\n")
 	for d in data:
-		file.write("		({},{})\n".format(d[1],d[0]))
+		file.write("		({},{{{}}})\n".format(d[1],d[0]))
 	file.write("	};\n")
 	file.write("\\end{axis}\n")
 	
@@ -456,7 +468,7 @@ def printTexGraph(data, filename):
 		file.write("	yticklabels={,,}]\n")
 		file.write("	\\addplot+[sharp plot] coordinates {\n")
 		for d in data:
-			file.write("		({},{})\n".format(d[2],d[0]))
+			file.write("		({},{{{}}})\n".format(d[2],d[0]))
 		file.write("	};\n")
 		file.write("\\end{axis}\n")
 		
@@ -550,6 +562,14 @@ def outputResults(args, apps):
 		if not args.skip_printing:
 			printTable(stats['top_apps'][_l][:top_size], False)
 			print ""
+
+		for c in _c:
+			_c[c]['top_apps'][_l].insert(0, ('Name','Developer','Downloads'))
+			if not args.skip_generating:
+				printTexTable(_c[c]['top_apps'][_l][:10], args.tex_dir + 'table_top_apps_'+c+'_'+_l+'.tex', False)
+			if not args.skip_printing:
+				printTable(_c[c]['top_apps'][_l][:10], False)
+				print ""
 				
 	# sections
 	l = [
