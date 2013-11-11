@@ -54,6 +54,11 @@ def fixName(category):
 		fixed = "Widgets"
 	return fixed
 
+def fixRow(name):
+	name = re.sub("%", "\\%", name)
+	name = re.sub("&", "\\&", name)
+	return name
+
 def roundUp(number):
 	""" Round up an integer to the nearest power of then of the same degree.
 	Exempel: 35 -> 40, 540 -> 600, 1250 -> 2000, etc """
@@ -364,7 +369,7 @@ def printTexTableRow(row, file):
 		format.append("%s")
 	format = " & ".join(format)
 	format += " \\\\ \\hline\n"
-	file.write(format % tuple(map(lambda x: re.sub("%", "\\%", str(x)), row)))
+	file.write(format % tuple(map(lambda x: fixRow(str(x)), row)))
 
 def printTexTable(table, filename, lastRowIsTotal = True):
 	""" Print out a table of data in LaTeX format to a file.
