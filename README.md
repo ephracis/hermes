@@ -1,6 +1,6 @@
 Hermes
 ======
-Tool for downloading and analyzing communication security of apps on
+Tool for downloading and analyzing communication-security of apps on
 the Google Play Store.
 
 Features:
@@ -68,7 +68,6 @@ You can email me at my gmail where my username is: ephracis
 ## Contribute
 
 You are free to contribute to the project. Extend it, refactor it, fix bugs you find, etc.
-Send me a pull request and I'll look into it.
 
 You can support my work by sending a contribution to the following bitcoin address:
 14xHJbs8hCxXzxe9Facv162AZmWyYEeWb1
