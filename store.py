@@ -11,7 +11,7 @@ try:
 	from googleplay import GooglePlayAPI
 except:
 	print("error: could not find GooglePlayAPI, make sure you have downloaded it and set your python path.")
-	exit(1)
+	#exit(1)
 
 def login(id, mail, password, token):
 	""" Login to the Google Play Store.

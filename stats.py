@@ -6,23 +6,43 @@ from lists import *
 from numbers import *
 from strings import *
 
-def isVulnerable(app):
-	""" Checks if an app contains a vulnerability.
+def verifierType(app):
+	""" Gets the type of certificate verifier the app is using. """
+	if isNaive(app):
+		return 'naive'
+	if isCustom(app):
+		return 'custom'
+	return 'native'
+
+def isNaive(app):
+	""" Checks if an app contains a naive verifier.
 		
 		Arguments:
 		app -- dictionary with meta data of the app to check
 		
 		Returns:
-		True if the app is vulnerable, otherwise False
+		True if the app contains naive verifiers, otherwise False
 		"""
-	bad_properties = ['naive_trustmanagers','insecure_factories','naive_hostname_verifiers','allow_all_hostname_verifiers']
-	return anyMoreThanOne(app,bad_properties)
+	properties = ['naive_trustmanagers','insecure_factories','naive_hostname_verifiers','allow_all_hostname_verifiers']
+	return anyMoreThanOne(app,properties)
+
+def isCustom(app):
+	""" Checks if an app contains a custom verifier.
+		
+		Arguments:
+		app -- dictionary with meta data of the app to check
+		
+		Returns:
+		True if the app contains a custom verifier, otherwise False
+		"""
+	properties = ['custom_trustmanagers','custom_hostname_verifiers']
+	return anyMoreThanOne(app,properties)
 
 def initStats(stats):
 	""" Initialize a dictionary of statistics. """
 	fields = ['total', 'internet', 'trustmanagers', 'naive_trustmanagers',
 			  'insecure_factories','custom_hostname_verifiers','naive_hostname_verifiers',
-			  'allow_all_hostname_verifiers','ssl_error_handlers','unchecked','vulnerable']
+			  'allow_all_hostname_verifiers','ssl_error_handlers','unchecked','custom', 'naive']
 	for field in fields:
 		if not field in stats:
 			stats[field] = 0
@@ -55,8 +75,10 @@ def fillStats(app, meta, stats):
 			stats['ssl_error_handlers'] += 1
 		if not 'trustmanagers' in meta:
 			stats['unchecked'] += 1
-		if isVulnerable(meta):
-			stats['vulnerable'] += 1
+		if isCustom(meta):
+			stats['custom'] += 1
+		if isNaive(meta):
+			stats['naive'] += 1
 
 def calculateStatistics(apps):
 	""" Calculates the statistics of apps.
@@ -67,7 +89,7 @@ def calculateStatistics(apps):
 		Returns:
 		A dictionary with statistics:
 		- categories: statistics per category
-		- top_apps: top most downloaded apps in sections such as "vulnerable" and "safe"
+		- top_apps: top most downloaded apps in sections such as "native", "custom" and "naive" describing their verifiers
 		- downloads: statistics per range of downloads
 		- ratings: statistics per rating
 		- years: statistics per year of release
@@ -75,7 +97,7 @@ def calculateStatistics(apps):
 		"""
 	categories = {}
 	total = {}
-	top_apps = {'vulnerable':[], 'safe':[] }
+	top_apps = {'naive':[], 'custom':[], 'native':[] }
 	downloads = {'0-100':{}, '100-10,000':{}, '10,000-1,000,000':{}, '1,000,000-100,000,000':{}, '100,000,000+':{}}
 	years = {'Unknown':{},'2008':{},'2009':{},'2010':{},'2011':{},'2012':{},'2013':{}}
 	ratings = {'Unknown':{},'0-1':{},'1-2':{},'2-3':{},'3-4':{},'4-5':{}}
@@ -89,7 +111,7 @@ def calculateStatistics(apps):
 		initStats(ratings[rating])
 	
 	for app,meta in apps.iteritems():
-		sec = 'vulnerable' if isVulnerable(meta) else 'safe'
+		sec = verifierType(meta)
 		_d = "{:,}+".format(int(meta['downloads']))
 		_t = meta['title']
 		_a = meta['creator']
@@ -116,19 +138,22 @@ def calculateStatistics(apps):
 		fillStats(app, meta, downloads[downloadRange(meta)])
 		
 		# top apps
-		top_apps[sec].append((_t, _a, _d))
+		tup = (_t, _a, _d)
+		if meta['internet'] and not tup in top_apps[sec]:
+			top_apps[sec].append(tup)
 		
 		# categories
 		for cat in meta['categories']:
 			category = cat[0]
 			if not category in categories:
 				categories[category] = {}
-				categories[category]['top_apps'] = { 'safe':[], 'vulnerable':[] }
+				categories[category]['top_apps'] = { 'native':[], 'custom':[], 'naive':[] }
 			fillStats(app, meta, categories[category])
-			categories[category]['top_apps'][sec].append((_t, _a, _d))
+			if meta['internet'] and not tup in categories[category]['top_apps'][sec]:
+				categories[category]['top_apps'][sec].append(tup)
 	
 	# do some sorting
-	for sec in ['vulnerable', 'safe']:
+	for sec in ['naive', 'custom', 'native']:
 		top_apps[sec] = sorted(top_apps[sec], key=lambda x: str2float(x[2]))
 		top_apps[sec].reverse()
 		for category in categories:

@@ -54,7 +54,7 @@ def printTexTable(table, filename, lastRowIsTotal = True):
 		table -- list of tuples with data points, the first row is header and the last row is total
 		file  -- file to print to
 		"""
-	min = 3 if lastRowIsTotal else 2
+	min = 2 if lastRowIsTotal else 1
 	if len(table) < min:
 		raise Exception("error: table need to be at least "+str(min)+" rows")
 	
@@ -86,7 +86,7 @@ def printTable(table, lastRowIsTotal = True):
 		Arguments:
 		table -- a list of tuples with data points, the first row is header and the last row is total
 		"""
-	min = 3 if lastRowIsTotal else 2
+	min = 2 if lastRowIsTotal else 1
 	if len(table) < min:
 		raise Exception("error: table need to be at least "+str(min)+" rows")
 	
@@ -169,6 +169,7 @@ def outputResults(args, apps):
 	
 	print "calculating statistics"
 	stats = calculateStatistics(apps)
+	pickle.dump(stats, open('foo.p', 'wb'))
 	_c = stats['categories']
 	_t = stats['total']
 	
@@ -182,7 +183,7 @@ def outputResults(args, apps):
 	
 	if not args.skip_generating:
 		printTexTable(table, args.tex_dir + "table_internet.tex")
-		data = map(lambda x: (x[0], x[2], int(str2float(x[3]))), alphabetical(table[1:-1]))
+		data = map(lambda x: (x[0], x[2], int(str2float(x[3]))), table[1:-1])
 		printTexGraph(data, args.tex_dir + "graph_internet.tex")
 	
 	if not args.skip_printing:
@@ -203,9 +204,9 @@ def outputResults(args, apps):
 		
 		if not args.skip_generating:
 			printTexTable(table, args.tex_dir + 'table_' + t[4] + '.tex')
-			data = map(lambda x: (x[0], x[1], int(str2float(x[3]))), alphabetical(table[1:-1]))
+			data = map(lambda x: (x[0], x[1], int(str2float(x[3]))), table[1:-1])
 			printTexGraph(data, args.tex_dir + 'graph_' + t[4] + '.tex')
-			data = map(lambda x: (x[0], x[2], int(str2float(x[4]))), alphabetical(table[1:-1]))
+			data = map(lambda x: (x[0], x[2], int(str2float(x[4]))), table[1:-1])
 			printTexGraph(data, args.tex_dir + 'graph_' + t[2] + '.tex')
 			 
 		if not args.skip_printing:
@@ -216,7 +217,8 @@ def outputResults(args, apps):
 		 ('insecure_factories','Insecure SSLSocketFactory', 'ssl_socket_factories'),
 		 ('allow_all_hostname_verifiers','AllowAllHostnameVerifier', 'allow_all_hostname_verifiers'),
 		 ('ssl_error_handlers','onReceivedSslError', 'on_received_ssl_error_handlers'),
-		 ('vulnerable','Vulnerable', 'vulnerable')
+		 ('custom','Custom', 'custom'),
+		 ('naive','Naive', 'naive')
 	]
 	for t in l:
 		table = map(lambda x: (fixName(x), _c[x][t[0]], percentage(_c[x][t[0]], _c[x]['internet'] - _c[x]['unchecked'])), _c)
@@ -227,7 +229,7 @@ def outputResults(args, apps):
 		
 		if not args.skip_generating:
 			printTexTable(table, args.tex_dir + 'table_' + t[2] + ".tex")
-			data = map(lambda x: (x[0], x[1], int(str2float(x[2]))), alphabetical(table[1:-1]))
+			data = map(lambda x: (x[0], x[1], int(str2float(x[2]))), table[1:-1])
 			printTexGraph(data, args.tex_dir + 'graph_' + t[2] + '.tex')
 		
 		if not args.skip_printing:
@@ -235,7 +237,7 @@ def outputResults(args, apps):
 			print ""
 	
 	# top lists
-	l = ['vulnerable','safe']
+	l = ['native','custom', 'naive']
 	for _l in l:
 		stats['top_apps'][_l].insert(0, ('Name','Developer','Downloads'))
 		if not args.skip_generating:
@@ -254,24 +256,24 @@ def outputResults(args, apps):
 	
 	# sections
 	l = [
-		('years',('Year','Vulnerable','Vulnerable'),[]),
-		('downloads',('Downloads','Vulnerable','Vulnerable'),[]),
-		('ratings',('Rating','Vulnerable','Vulnerable'),[])
+		('years',('Year','Naive','Naive'),[]),
+		('downloads',('Downloads','Naive','Naive'),[]),
+		('ratings',('Rating','Naive','Naive'),[])
 	]
 		 
 	# sort sections
 	c = stats['years']
-	_l = map(lambda x: (x, c[x]['vulnerable'], percentage(c[x]['vulnerable'], c[x]['internet'] - c[x]['unchecked'])), c)
+	_l = map(lambda x: (x, c[x]['naive'], percentage(c[x]['naive'], c[x]['internet'] - c[x]['unchecked'])), c)
 	_l = sorted(_l, key=lambda x: str2float(x[2]))
 	l[0][2].extend(_l)
 	
 	for x in ['0-100','100-10,000','10,000-1,000,000','1,000,000-100,000,000','100,000,000+']:
 		c = stats['downloads'][x]
-		l[1][2].append((x, c['vulnerable'], percentage(c['vulnerable'], c['internet']-c['unchecked'])))
+		l[1][2].append((x, c['naive'], percentage(c['naive'], c['internet']-c['unchecked'])))
 
 	for x in ['0-1','1-2','2-3','3-4','4-5','Unknown']:
 		c = stats['ratings'][x]
-		l[2][2].append((x, c['vulnerable'], percentage(c['vulnerable'], c['internet']-c['unchecked'])))
+		l[2][2].append((x, c['naive'], percentage(c['naive'], c['internet']-c['unchecked'])))
 	
 	# output section tables
 	for _l in l:
