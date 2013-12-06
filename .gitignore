@@ -1,4 +1,5 @@
 .hermes-cache*
+tex
 
 *.py[cod]
 
