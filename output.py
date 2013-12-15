@@ -156,6 +156,55 @@ def printTexGraph(data, filename):
 	file.write("\\end{tikzpicture}\n")
 	file.close()
 
+def printTexStackedGraph(legend, data, filename):
+	""" Print a LaTeX file with a stacked bar graph.
+		
+		Arguments:
+		legend   -- list of legend names and colors
+		data     -- list of tuples (name, value1, value2, ..., valueN)
+		filename -- filename of the latex file to print to
+		
+		Note that the length of the legend list must match the number of
+		values in the data tuple.
+		"""
+	file = open(filename, 'w')
+	
+	stacks = len(legend)
+	xmax = roundUp(max(map(lambda x: sum(x[1:]), data)))
+	labels = ",".join(map(lambda x: "{{{}}}".format(x[0]), data))
+	legends = ",".join(map(lambda x: "{{{}}}".format(x[0]), legend))
+	
+	height = round(2.4 + 0.6 * len(data),2)
+	
+	file.write("\\begin{tikzpicture}\n")
+	file.write("\\begin{axis}[\n")
+	file.write("	xbar stacked, xmin=0, xmax={},\n".format(xmax))
+	file.write("	width=.8\\textwidth, height={}cm,\n".format(height))
+	file.write("	scaled ticks=false,\n")
+	file.write("	tick label style={/pgf/number format/fixed},\n")
+	file.write("	axis x line*=bottom,\n")
+	file.write("	axis y line*=none,\n")
+	file.write("	tick label style={font=\\footnotesize},\n")
+	file.write("	legend style={font=\\footnotesize},\n")
+	file.write("	label style={font=\\footnotesize},\n")
+	file.write("	symbolic y coords={{{}}},\n".format(labels))
+	file.write("	ytick=data,,\n")
+	file.write("	xlabel={Apps},\n")
+	file.write("	area legend,\n")
+	file.write("	legend style={{legend columns={},at={{(0,-0.1)}},anchor=north west,draw=none}},\n".format(len(legend)))
+	file.write("	enlarge y limits=0.1]\n")
+	file.write("\\legend{{{}}}\n".format(legends))
+	
+	for i in xrange(0,len(legend)):
+		l = legend[i]
+		file.write("	\\addplot[fill={}] coordinates {{\n".format(l[1]))
+		for d in data:
+			file.write("		({},{{{}}})\n".format(d[i+1],d[0]))
+		file.write("	};\n")
+	file.write("\\end{axis}\n")
+	file.write("\\end{tikzpicture}\n")
+	file.close()
+
 def outputResults(args, apps):
 	""" Print statistics out to LaTeX files.
 		
@@ -169,7 +218,7 @@ def outputResults(args, apps):
 	
 	print "calculating statistics"
 	stats = calculateStatistics(apps)
-	pickle.dump(stats, open('foo.p', 'wb'))
+	pickle.dump(stats, open('stats.p', 'wb'))
 	_c = stats['categories']
 	_t = stats['total']
 	
@@ -217,8 +266,10 @@ def outputResults(args, apps):
 		 ('insecure_factories','Insecure SSLSocketFactory', 'ssl_socket_factories'),
 		 ('allow_all_hostname_verifiers','AllowAllHostnameVerifier', 'allow_all_hostname_verifiers'),
 		 ('ssl_error_handlers','onReceivedSslError', 'on_received_ssl_error_handlers'),
+		 ('native','Native', 'native'),
 		 ('custom','Custom', 'custom'),
-		 ('naive','Naive', 'naive')
+		 ('naive','Naive', 'naive'),
+		 ('bad','Bad', 'bad')
 	]
 	for t in l:
 		table = map(lambda x: (fixName(x), _c[x][t[0]], percentage(_c[x][t[0]], _c[x]['internet'] - _c[x]['unchecked'])), _c)
@@ -236,46 +287,28 @@ def outputResults(args, apps):
 			printTable(table)
 			print ""
 	
-	# top lists
-	l = ['native','custom', 'naive']
-	for _l in l:
-		stats['top_apps'][_l].insert(0, ('Name','Developer','Downloads'))
-		if not args.skip_generating:
-			printTexTable(stats['top_apps'][_l][:top_size], args.tex_dir + 'table_top_apps_'+_l+'.tex', False)
-		if not args.skip_printing:
-			printTable(stats['top_apps'][_l][:top_size], False)
-			print ""
-		
-		for c in _c:
-			_c[c]['top_apps'][_l].insert(0, ('Name','Developer','Downloads'))
-			if not args.skip_generating:
-				printTexTable(_c[c]['top_apps'][_l][:10], args.tex_dir + 'table_top_apps_'+c+'_'+_l+'.tex', False)
-			if not args.skip_printing:
-				printTable(_c[c]['top_apps'][_l][:10], False)
-				print ""
-	
 	# sections
 	l = [
-		('years',('Year','Naive','Naive'),[]),
-		('downloads',('Downloads','Naive','Naive'),[]),
-		('ratings',('Rating','Naive','Naive'),[])
+		('years',('Year','Bad','Bad'),[]),
+		('downloads',('Downloads','Bad','Bad'),[]),
+		('ratings',('Rating','Bad','Bad'),[])
 	]
 		 
 	# sort sections
 	c = stats['years']
-	_l = map(lambda x: (x, c[x]['naive'], percentage(c[x]['naive'], c[x]['internet'] - c[x]['unchecked'])), c)
+	_l = map(lambda x: (x, c[x]['bad'], percentage(c[x]['bad'], c[x]['internet'] - c[x]['unchecked'])), c)
 	_l = sorted(_l, key=lambda x: str2float(x[2]))
 	l[0][2].extend(_l)
 	
 	for x in ['0-100','100-10,000','10,000-1,000,000','1,000,000-100,000,000','100,000,000+']:
 		c = stats['downloads'][x]
-		l[1][2].append((x, c['naive'], percentage(c['naive'], c['internet']-c['unchecked'])))
+		l[1][2].append((x, c['bad'], percentage(c['bad'], c['internet']-c['unchecked'])))
 
 	for x in ['0-1','1-2','2-3','3-4','4-5','Unknown']:
 		c = stats['ratings'][x]
-		l[2][2].append((x, c['naive'], percentage(c['naive'], c['internet']-c['unchecked'])))
+		l[2][2].append((x, c['bad'], percentage(c['bad'], c['internet']-c['unchecked'])))
 	
-	# output section tables
+	# output sections
 	for _l in l:
 		c = stats[_l[0]]
 		table = _l[2]
@@ -287,3 +320,25 @@ def outputResults(args, apps):
 		if not args.skip_printing:
 			printTable(table, False)
 			print ""
+
+	# verifier type
+	table = []
+	tot = _t['internet'] - _t['unchecked']
+	for type in [('native', 'Native or none'), ('custom', 'Custom'), ('naive', 'Naive'),('bad', 'Bad')]:
+		table.append((type[1], _t[type[0]], percentage(_t[type[0]], tot)))
+	table.insert(0, ("Verifier type", "Apps", "Percentage"))
+	if not args.skip_generating:
+		printTexTable(table, args.tex_dir + 'table_verifier_type.tex', False)
+		legend = [('Native', 'green'),('Custom', 'yellow'),('Naive', 'orange'),('Bad', 'red')]
+		sections = ['native','custom','naive','bad']
+		data = map(lambda x: stats['total'][x], sections)
+		data = [tuple(['Verifier type'] + data)]
+		printTexStackedGraph(legend, data, args.tex_dir + 'graph_verifier_type.tex')
+		c = stats['categories']
+		data = map(lambda x: tuple([fixName(x)] + map(lambda y: c[x][y], sections)),c)
+		data = map(lambda x: tuple([x[0]] + map(lambda y: round(100.0 * y / sum(x[1:]), 3), x[1:])), data)
+		data = sorted(data, key=lambda x: -1 * (x[3] + x[4]))
+		printTexStackedGraph(legend, data, args.tex_dir + 'graph_verifier_type_categories.tex')
+	if not args.skip_printing:
+		printTable(table, False)
+		print ""

@@ -12,7 +12,7 @@ def ratingRange(app):
 	""" Get the rating range of an app. """
 	rating = 'Unknown'
 	r = app['rating']
-	if r > 0 and r <= 1:
+	if r >= 0 and r <= 1:
 		rating = '0-1'
 	elif r > 1 and r <= 2:
 		rating = '1-2'
@@ -26,14 +26,14 @@ def ratingRange(app):
 
 def downloadRange(app):
 	""" Get the download range of an app. """
-	downloads = '0-100'
+	downloads = '0-99'
 	d = int(app['downloads'])
 	if d >= 100 and d < 10000:
-		downloads = '100-10,000'
+		downloads = '100-9,999'
 	elif d >= 10000 and d < 1000000:
-		downloads = '10,000-1,000,000'
+		downloads = '10,000-999,999'
 	elif d >= 1000000 and d < 100000000:
-		downloads = '1,000,000-100,000,000'
+		downloads = '1,000,000-99,999,999'
 	elif d >= 100000000:
 		downloads = '100,000,000+'
 	return downloads

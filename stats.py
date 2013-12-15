@@ -6,16 +6,20 @@ from lists import *
 from numbers import *
 from strings import *
 
-def verifierType(app):
-	""" Gets the type of certificate verifier the app is using. """
-	if isNaive(app):
-		return 'naive'
-	if isCustom(app):
-		return 'custom'
-	return 'native'
+def isBad(app):
+	""" Checks if an app contains a code which bypasses proper verification.
+		
+		Arguments:
+		app -- dictionary with meta data of the app to check
+		
+		Returns:
+		True if the app contains bad code, otherwise False
+		"""
+	properties = ['insecure_factories','allow_all_hostname_verifiers']
+	return anyMoreThanOne(app,properties)
 
 def isNaive(app):
-	""" Checks if an app contains a naive verifier.
+	""" Checks if an app contains a custom verifier which is naive.
 		
 		Arguments:
 		app -- dictionary with meta data of the app to check
@@ -23,7 +27,7 @@ def isNaive(app):
 		Returns:
 		True if the app contains naive verifiers, otherwise False
 		"""
-	properties = ['naive_trustmanagers','insecure_factories','naive_hostname_verifiers','allow_all_hostname_verifiers']
+	properties = ['naive_trustmanagers','naive_hostname_verifiers']
 	return anyMoreThanOne(app,properties)
 
 def isCustom(app):
@@ -35,14 +39,25 @@ def isCustom(app):
 		Returns:
 		True if the app contains a custom verifier, otherwise False
 		"""
-	properties = ['custom_trustmanagers','custom_hostname_verifiers']
+	properties = ['trustmanagers','custom_hostname_verifiers']
 	return anyMoreThanOne(app,properties)
+
+def isNative(app):
+	""" Checks if an app does not contain any custom verifiers or verification bypassing.
+		
+		Arguments:
+		app -- dictionary with meta data of the app to check
+		
+		Returns:
+		True if the app contains a no customization to cert verification, otherwise False
+		"""
+	return (not isCustom(app) and not isBad(app))
 
 def initStats(stats):
 	""" Initialize a dictionary of statistics. """
 	fields = ['total', 'internet', 'trustmanagers', 'naive_trustmanagers',
 			  'insecure_factories','custom_hostname_verifiers','naive_hostname_verifiers',
-			  'allow_all_hostname_verifiers','ssl_error_handlers','unchecked','custom', 'naive']
+			  'allow_all_hostname_verifiers','ssl_error_handlers','unchecked','native', 'custom', 'naive', 'bad']
 	for field in fields:
 		if not field in stats:
 			stats[field] = 0
@@ -59,6 +74,7 @@ def fillStats(app, meta, stats):
 	stats['total'] += 1
 	if meta['internet']:
 		stats['internet'] += 1
+		
 		if moreThanOne(meta, 'trustmanagers'):
 			stats['trustmanagers'] += 1
 		if moreThanOne(meta, 'naive_trustmanagers'):
@@ -75,10 +91,15 @@ def fillStats(app, meta, stats):
 			stats['ssl_error_handlers'] += 1
 		if not 'trustmanagers' in meta:
 			stats['unchecked'] += 1
-		if isCustom(meta):
-			stats['custom'] += 1
-		if isNaive(meta):
-			stats['naive'] += 1
+		else:
+			if isBad(meta):
+				stats['bad'] += 1
+			elif isNaive(meta):
+				stats['naive'] += 1
+			elif isCustom(meta):
+				stats['custom'] += 1
+			else:
+				stats['native'] += 1
 
 def calculateStatistics(apps):
 	""" Calculates the statistics of apps.
@@ -89,7 +110,6 @@ def calculateStatistics(apps):
 		Returns:
 		A dictionary with statistics:
 		- categories: statistics per category
-		- top_apps: top most downloaded apps in sections such as "native", "custom" and "naive" describing their verifiers
 		- downloads: statistics per range of downloads
 		- ratings: statistics per rating
 		- years: statistics per year of release
@@ -97,7 +117,6 @@ def calculateStatistics(apps):
 		"""
 	categories = {}
 	total = {}
-	top_apps = {'naive':[], 'custom':[], 'native':[] }
 	downloads = {'0-100':{}, '100-10,000':{}, '10,000-1,000,000':{}, '1,000,000-100,000,000':{}, '100,000,000+':{}}
 	years = {'Unknown':{},'2008':{},'2009':{},'2010':{},'2011':{},'2012':{},'2013':{}}
 	ratings = {'Unknown':{},'0-1':{},'1-2':{},'2-3':{},'3-4':{},'4-5':{}}
@@ -111,7 +130,6 @@ def calculateStatistics(apps):
 		initStats(ratings[rating])
 	
 	for app,meta in apps.iteritems():
-		sec = verifierType(meta)
 		_d = "{:,}+".format(int(meta['downloads']))
 		_t = meta['title']
 		_a = meta['creator']
@@ -137,32 +155,15 @@ def calculateStatistics(apps):
 		# downloads
 		fillStats(app, meta, downloads[downloadRange(meta)])
 		
-		# top apps
-		tup = (_t, _a, _d)
-		if meta['internet'] and not tup in top_apps[sec]:
-			top_apps[sec].append(tup)
-		
 		# categories
 		for cat in meta['categories']:
 			category = cat[0]
 			if not category in categories:
 				categories[category] = {}
-				categories[category]['top_apps'] = { 'native':[], 'custom':[], 'naive':[] }
 			fillStats(app, meta, categories[category])
-			if meta['internet'] and not tup in categories[category]['top_apps'][sec]:
-				categories[category]['top_apps'][sec].append(tup)
-	
-	# do some sorting
-	for sec in ['naive', 'custom', 'native']:
-		top_apps[sec] = sorted(top_apps[sec], key=lambda x: str2float(x[2]))
-		top_apps[sec].reverse()
-		for category in categories:
-			categories[category]['top_apps'][sec] = sorted(categories[category]['top_apps'][sec], key=lambda x: str2float(x[2]))
-			categories[category]['top_apps'][sec].reverse()
 	
 	return {
 		'categories':categories,
-		'top_apps':top_apps,
 		'downloads':downloads,
 		'years':years,
 		'ratings':ratings,
