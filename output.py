@@ -218,7 +218,6 @@ def outputResults(args, apps):
 	
 	print "calculating statistics"
 	stats = calculateStatistics(apps)
-	pickle.dump(stats, open('stats.p', 'wb'))
 	_c = stats['categories']
 	_t = stats['total']
 	

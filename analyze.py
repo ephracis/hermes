@@ -4,7 +4,7 @@ try:
 	import mallodroid
 except:
 	print("error: could not find Mallodroid, make sure you have downloaded it and set your python path.")
-	#exit(1)
+	exit(1)
 
 def analyze(apps, filename, app):
 	""" Performs a static code analysis on an app.
