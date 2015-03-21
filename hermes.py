@@ -109,8 +109,6 @@ def processApps(args, gpapi, apps):
 	Arguments:
 	args       -- the command line arguments object
 	gpapi      -- the Google Play API object
-	total      -- the total number of apps
-	categories -- dictionary of categories,subcategories and number of apps in them
 	apps       -- dictionary of apps and their meta data
 	"""
 	createAppFolder(args)
@@ -166,12 +164,12 @@ def main():
 	
 	# load cache
 	apps = {}
-	#try:
-	print "looking for cache"
-	apps = pickle.load(open(args.f_cache, 'rb'))
-	print "loaded {:,} apps from cache".format(len(apps))
-		#except:
-		#print "no cache found"
+	try:
+		print "looking for cache"
+		apps = pickle.load(open(args.f_cache, 'rb'))
+		print "loaded {:,} apps from cache".format(len(apps))
+	except:
+		print "no cache found"
 	
 	# download + analyze
 	if not args.skip_download:	
