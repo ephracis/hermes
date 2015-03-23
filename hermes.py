@@ -176,8 +176,8 @@ def main():
 		print "logging in to play store"
 		api = login(args.id, args.user, args.passw, args.token)
 		
-		#print "constructing list of apps"
-		#browse(args, api, apps)
+		print "constructing list of apps"
+		browse(args, api, apps)
 		
 		print "starting app analyzer"
 		processApps(args, api, apps)
