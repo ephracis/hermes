@@ -5,6 +5,8 @@ import time
 import urlparse
 import sys
 
+from output import *
+
 # Do not remove
 GOOGLE_LOGIN = GOOGLE_PASSWORD = AUTH_TOKEN = None
 
