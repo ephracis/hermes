@@ -17,7 +17,7 @@ You need to install some packages before you can run Hermes:
 
 * **Androguard**<br/>
  Tool for reverse engineering Android app files.<br/>
- https://code.google.com/p/androguard/
+ https://github.com/androguard/androguard
 
 * **Mallodroid**<br/>
  An Androguard module which examines SSL certificate validation.<br/>
